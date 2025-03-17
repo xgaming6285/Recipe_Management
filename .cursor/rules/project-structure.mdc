@@ -1,0 +1,55 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+RecipeHub/
+│── backend/                     # Backend (Node.js + Express)
+│   ├── config/                  # Configuration files (e.g., DB connection)
+│   ├── controllers/             # Request handlers (business logic)
+│   ├── middleware/              # Middleware (authentication, error handling)
+│   ├── models/                  # Mongoose models (schemas)
+│   ├── routes/                  # API routes
+│   ├── utils/                   # Utility functions
+│   ├── .env                     # Environment variables (ignored in Git)
+│   ├── package.json            # Backend dependencies
+│   ├── server.js               # Entry point of the backend
+│── frontend/                   # Frontend (React + Tailwind)
+│   ├── public/                 # Static assets
+│   ├── src/
+│   │   ├── assets/            # Images, icons, etc.
+│   │   ├── components/        # Reusable UI components
+│   │   │   ├── auth/
+│   │   │   │   ├── Login.js
+│   │   │   │   └── Signup.js
+│   │   │   ├── recipes/ 
+│   │   │   │   ├── RecipeCard.js
+│   │   │   │   ├── RecipeDetail.js
+│   │   │   │   └── RecipeList.js
+│   │   │   ├── routing/
+│   │   │   │   └── PrivateRoute.js
+│   │   │   ├── Navbar.jsx
+│   │   │   ├── RecipeForm.jsx
+│   │   │   └── SearchFilter.jsx
+│   │   ├── context/           # Global state management
+│   │   │   ├── AuthContext.js
+│   │   │   └── RecipeContext.jsx
+│   │   ├── hooks/            # Custom React hooks
+│   │   ├── pages/            # Page components
+│   │   │   ├── CreateRecipe.jsx
+│   │   │   ├── Home.jsx
+│   │   │   ├── Login.jsx
+│   │   │   ├── Profile.jsx
+│   │   │   ├── RecipeDetail.jsx
+│   │   │   └── Signup.jsx
+│   │   ├── services/         # API calls
+│   │   │   ├── axiosConfig.js
+│   │   │   └── recipeService.js
+│   │   ├── App.jsx           # Root component
+│   │   └── index.js         # Entry point
+│   ├── .env          # Environment variables
+│   ├── package.json         # Frontend dependencies
+│   └── tailwind.config.js    # Tailwind CSS configuration   
+│── .gitignore               # Files to ignore in version control
+│── PROJECT.md             # Project specifications
+└── README.md               # Project documentation
