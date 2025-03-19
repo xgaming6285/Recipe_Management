@@ -4,14 +4,12 @@ import { AppError } from '../utils/errorHandler';
 // Function to connect to MongoDB
 const connectDB = async () => {
     try {
-        const conn = await mongoose.connect(process.env.MONGODB_URI, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-        });
-
+        const conn = await mongoose.connect(process.env.MONGODB_URI);
         console.log(`MongoDB Connected: ${conn.connection.host}`);
     } catch (error) {
-        throw new AppError(`Error connecting to MongoDB: ${error.message}`, 500);
+        console.error(`Error connecting to MongoDB: ${error.message}`);
+        // Implement retry logic here
+        throw new AppError(`Database connection failed: ${error.message}`, 500);
     }
 };
 

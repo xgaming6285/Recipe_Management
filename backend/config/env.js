@@ -19,8 +19,8 @@ const env = {
 };
 
 // Validate required environment variables
-const requiredEnvVars = ['JWT_SECRET'];
-const missingEnvVars = requiredEnvVars.filter(key => !env[key]);
+const requiredEnvVars = ['MONGODB_URI', 'JWT_SECRET', 'NODE_ENV', 'PORT'];
+const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
 
 if (missingEnvVars.length > 0) {
   throw new Error(`Missing required environment variables: ${missingEnvVars.join(', ')}`);

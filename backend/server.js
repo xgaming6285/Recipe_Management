@@ -24,8 +24,12 @@ const app = express();
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? process.env.FRONTEND_URL 
-    : 'http://localhost:3000',
-  credentials: true
+    : ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5173'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  credentials: true,
+  maxAge: 86400, // 24 hours
+  exposedHeaders: ['set-cookie']
 }));
 app.use(express.json());
 
