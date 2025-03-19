@@ -1,24 +1,34 @@
 import User from '../models/User';
 import Recipe from '../models/Recipe';
-import { asyncHandler } from 'express-async-handler';
+import { AppError } from '../utils/errorHandler';
+import catchAsync from '../utils/catchAsync';
 
 // Get current user profile
-const getUserProfile = asyncHandler(async (req, res) => {
+export const getUserProfile = catchAsync(async (req, res, next) => {
   const user = await User.findById(req.user.id).select('-password');
   
   if (!user) {
-    res.status(404);
-    throw new Error('User not found');
+    return next(new AppError('User not found', 404));
   }
   
-  res.status(200).json(user);
+  res.status(200).json({
+    status: 'success',
+    data: {
+      user
+    }
+  });
 });
 
 // Get recipes created by current user
-const getUserRecipes = asyncHandler(async (req, res) => {
-  const recipes = await Recipe.find({ createdBy: req.user.id }).sort({ createdAt: -1 });
+export const getUserRecipes = catchAsync(async (req, res, next) => {
+  const recipes = await Recipe.find({ createdBy: req.user.id })
+    .sort({ createdAt: -1 });
   
-  res.status(200).json(recipes);
+  res.status(200).json({
+    status: 'success',
+    results: recipes.length,
+    data: {
+      recipes
+    }
+  });
 });
-
-export { getUserProfile, getUserRecipes };

@@ -1,7 +1,9 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User';
+import { AppError } from '../utils/errorHandler';
+import catchAsync from '../utils/catchAsync';
 
-export const protect = async (req, res, next) => {
+export const protect = catchAsync(async (req, res, next) => {
   try {
     let token;
     
@@ -11,10 +13,7 @@ export const protect = async (req, res, next) => {
     }
     
     if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: 'You are not logged in. Please log in to get access.'
-      });
+      return next(new AppError('You are not logged in. Please log in to get access.', 401));
     }
     
     // Verify token
@@ -23,10 +22,7 @@ export const protect = async (req, res, next) => {
     // Check if user still exists
     const currentUser = await User.findById(decoded.id);
     if (!currentUser) {
-      return res.status(401).json({
-        success: false,
-        message: 'The user belonging to this token no longer exists.'
-      });
+      return next(new AppError('The user belonging to this token no longer exists.', 401));
     }
     
     // Grant access to protected route
@@ -38,4 +34,4 @@ export const protect = async (req, res, next) => {
       message: 'Invalid token. Please log in again.'
     });
   }
-};
+});
