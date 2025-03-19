@@ -2,12 +2,12 @@ import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import PrivateRoute from './components/routing/PrivateRoute';
-import Login from './components/auth/Login';
-import Signup from './components/auth/Signup';
-import Home from './components/Home';
-import UserProfile from './components/UserProfile';
-import CreateRecipe from './components/recipes/CreateRecipe';
-import RecipeDetail from './components/recipes/RecipeDetail';
+import Login from './pages/LoginPage';
+import Signup from './pages/SignupPage';
+import Home from './pages/Home';
+import Profile from './pages/Profile';
+import CreateRecipe from './pages/CreateRecipe';
+import RecipeDetail from './pages/RecipeDetail';
 import EditRecipe from './components/recipes/EditRecipe';
 import Navbar from './components/Navbar';
 
@@ -15,6 +15,7 @@ function App() {
   return (
     <Router>
       <AuthProvider>
+        <Navbar />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
@@ -24,7 +25,7 @@ function App() {
             path="/profile"
             element={
               <PrivateRoute>
-                <UserProfile />
+                <Profile />
               </PrivateRoute>
             }
           />

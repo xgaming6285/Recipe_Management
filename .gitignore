@@ -54,3 +54,7 @@ Thumbs.db
 # Backend specific
 /backend/node_modules/
 /backend/.env
+
+# Project documentation
+PROJECT.md
+
