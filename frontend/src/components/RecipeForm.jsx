@@ -2,11 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { recipeService } from '../services/recipeService';
+import useAxiosCancellation from '../hooks/useAxiosCancellation';
+import axios from 'axios';
 
 const RecipeForm = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditMode = Boolean(id);
+  const { getCancelToken } = useAxiosCancellation();
 
   const [formData, setFormData] = useState({
     title: '',
@@ -26,7 +29,7 @@ const RecipeForm = () => {
       const fetchRecipe = async () => {
         try {
           setLoading(true);
-          const recipe = await recipeService.getById(id);
+          const recipe = await recipeService.getById(id, { cancelToken: getCancelToken() });
           setFormData({
             title: recipe.title,
             description: recipe.description,
@@ -38,6 +41,10 @@ const RecipeForm = () => {
           });
           setLoading(false);
         } catch (error) {
+          if (axios.isCancel(error)) {
+            console.log('Request cancelled:', error.message);
+            return;
+          }
           console.error('Error fetching recipe:', error);
           setError(error.message || 'Error fetching recipe details. Please try again.');
           setLoading(false);
@@ -46,7 +53,7 @@ const RecipeForm = () => {
 
       fetchRecipe();
     }
-  }, [id, isEditMode]);
+  }, [id, isEditMode, getCancelToken]);
 
   const handleChange = (e) => {
     setFormData({
@@ -104,17 +111,23 @@ const RecipeForm = () => {
         return;
       }
       
+      const options = { cancelToken: getCancelToken() };
+      
       if (isEditMode) {
-        await recipeService.update(id, submissionData);
+        await recipeService.update(id, submissionData, options);
         toast.success('Recipe updated successfully!');
       } else {
-        await recipeService.create(submissionData);
+        await recipeService.create(submissionData, options);
         toast.success('Recipe created successfully!');
       }
       
       setLoading(false);
       navigate('/recipes');
     } catch (error) {
+      if (axios.isCancel(error)) {
+        console.log('Request cancelled:', error.message);
+        return;
+      }
       console.error('Error submitting recipe:', error);
       setError(error.message || 'Error saving recipe. Please try again.');
       setLoading(false);
@@ -122,9 +135,11 @@ const RecipeForm = () => {
   };
 
   if (loading && isEditMode) {
-    return <div className="flex justify-center items-center h-64">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-    </div>;
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
   }
 
   return (
@@ -152,7 +167,6 @@ const RecipeForm = () => {
             onChange={handleChange}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Recipe title"
-            maxLength="100"
             required
           />
         </div>
@@ -167,9 +181,8 @@ const RecipeForm = () => {
             value={formData.description}
             onChange={handleChange}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Describe your recipe"
+            placeholder="Recipe description"
             rows="3"
-            maxLength="500"
             required
           ></textarea>
         </div>
@@ -187,6 +200,7 @@ const RecipeForm = () => {
                 onChange={(e) => handleArrayChange(e, index, 'ingredients')}
                 className="flex-grow px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder={`Ingredient ${index + 1}`}
+                required
               />
               <button
                 type="button"
@@ -222,6 +236,7 @@ const RecipeForm = () => {
                 className="flex-grow px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder={`Step ${index + 1}`}
                 rows="2"
+                required
               ></textarea>
               <button
                 type="button"

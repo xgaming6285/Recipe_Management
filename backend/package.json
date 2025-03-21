@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "description": "Backend for RecipeHub - A Recipe Management Application",
   "type": "module",
-  "main": "server.js",
+  "main": "cluster.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
+    "start": "node cluster.js",
+    "dev": "nodemon cluster.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

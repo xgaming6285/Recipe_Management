@@ -8,8 +8,12 @@ import {
   getUserRecipes
 } from '../controllers/recipeController';
 import { protect, authorize } from '../middleware/auth';
+import { validateRecipeInput } from '../middleware/validation';
 
 const router = express.Router();
+
+router.post('/', validateRecipeInput, createRecipe);
+router.put('/:id', validateRecipeInput, updateRecipe);
 
 // Public routes
 router.get('/', getRecipes);

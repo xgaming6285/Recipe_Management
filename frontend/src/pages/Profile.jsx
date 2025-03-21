@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import RecipeCard from '../components/recipes/RecipeCard';
+import useAxiosCancellation from '../hooks/useAxiosCancellation';
 
 const ProfilePage = () => {
   const [user, setUser] = useState(null);
@@ -9,6 +10,7 @@ const ProfilePage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const { getCancelToken } = useAxiosCancellation();
   
   // Get token from localStorage
   const token = localStorage.getItem('token');
@@ -28,7 +30,8 @@ const ProfilePage = () => {
         const config = {
           headers: {
             Authorization: `Bearer ${token}`
-          }
+          },
+          cancelToken: getCancelToken()
         };
         
         // Fetch user profile
@@ -41,13 +44,17 @@ const ProfilePage = () => {
         
         setLoading(false);
       } catch (err) {
+        if (axios.isCancel(err)) {
+          console.log('Request cancelled:', err.message);
+          return;
+        }
         setError(err.response?.data?.message || 'Something went wrong');
         setLoading(false);
       }
     };
     
     fetchUserProfile();
-  }, [token, navigate]);
+  }, [token, navigate, getCancelToken]);
   
   if (loading) return <div className="text-center py-10">Loading...</div>;
   

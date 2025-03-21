@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import useAxiosCancellation from '../../hooks/useAxiosCancellation';
 
 const RecipeDetail = () => {
   const { id } = useParams();
@@ -11,14 +12,21 @@ const RecipeDetail = () => {
   const [error, setError] = useState('');
   const [user, setUser] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const { getCancelToken } = useAxiosCancellation();
 
   useEffect(() => {
     const fetchRecipe = async () => {
       try {
-        const response = await axios.get(`/api/recipes/${id}`);
+        const response = await axios.get(`/api/recipes/${id}`, {
+          cancelToken: getCancelToken()
+        });
         setRecipe(response.data);
         setLoading(false);
       } catch (error) {
+        if (axios.isCancel(error)) {
+          console.log('Request cancelled:', error.message);
+          return;
+        }
         console.error('Error fetching recipe:', error);
         setError('Error loading recipe. It may have been deleted or doesn\'t exist.');
         setLoading(false);
@@ -33,17 +41,22 @@ const RecipeDetail = () => {
         const response = await axios.get('/api/users/me', {
           headers: {
             'Authorization': `Bearer ${token}`
-          }
+          },
+          cancelToken: getCancelToken()
         });
         setUser(response.data);
       } catch (error) {
+        if (axios.isCancel(error)) {
+          console.log('Request cancelled:', error.message);
+          return;
+        }
         console.error('Error fetching user profile:', error);
       }
     };
 
     fetchRecipe();
     fetchUserProfile();
-  }, [id]);
+  }, [id, getCancelToken]);
 
   const handleDelete = async () => {
     try {
@@ -51,11 +64,16 @@ const RecipeDetail = () => {
       await axios.delete(`/api/recipes/${id}`, {
         headers: {
           'Authorization': `Bearer ${token}`
-        }
+        },
+        cancelToken: getCancelToken()
       });
       toast.success('Recipe deleted successfully');
       navigate('/recipes');
     } catch (error) {
+      if (axios.isCancel(error)) {
+        console.log('Request cancelled:', error.message);
+        return;
+      }
       console.error('Error deleting recipe:', error);
       toast.error(error.response?.data?.message || 'Error deleting recipe');
     }

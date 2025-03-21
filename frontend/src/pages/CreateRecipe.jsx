@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import apiClient from '../services/axiosConfig';
 
 const CreateRecipe = () => {
   const navigate = useNavigate();
@@ -81,7 +81,7 @@ const CreateRecipe = () => {
     setError('');
 
     try {
-      const response = await axios.post('/api/recipes', formData);
+      const response = await apiClient.post('/recipes', formData);
       navigate(`/recipes/${response.data._id}`);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to create recipe');

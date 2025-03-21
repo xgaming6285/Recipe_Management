@@ -1,6 +1,9 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import compression from 'compression';
 import { 
     errorHandler, 
     handleUnhandledRejection, 
@@ -33,10 +36,31 @@ app.use(cors({
 }));
 app.use(express.json());
 
+app.use(helmet());
+app.use(compression());
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100 // Limit each IP to 100 requests per windowMs
+});
+app.use('/api/', limiter);
+
 // Mount Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/recipes', recipeRoutes);
+
+// Request size limits
+app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+
+// Timeout handling
+app.use((req, res, next) => {
+  req.setTimeout(5000, () => {
+    res.status(408).send('Request timeout');
+  });
+  next();
+});
 
 // Error Handling Middleware
 app.all('*', (req, res, next) => {

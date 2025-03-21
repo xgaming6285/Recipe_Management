@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { getAllRecipes } from '../../services/recipeService';
 import RecipeCard from './RecipeCard';
 import { useAuth } from '../../context/AuthContext';
+import useAxiosCancellation from '../../hooks/useAxiosCancellation';
+import axios from 'axios';
 
 const RecipeList = () => {
   const [recipes, setRecipes] = useState([]);
@@ -15,6 +17,7 @@ const RecipeList = () => {
   const [totalRecipes, setTotalRecipes] = useState(0);
   const [sortBy, setSortBy] = useState('-createdAt');
   const { user } = useAuth();
+  const { getCancelToken } = useAxiosCancellation();
   
   const ITEMS_PER_PAGE = 12;
 
@@ -51,11 +54,15 @@ const RecipeList = () => {
         }
       }
 
-      const response = await getAllRecipes(params);
+      const response = await getAllRecipes(params, { cancelToken: getCancelToken() });
       setRecipes(response.data);
       setTotalRecipes(response.metadata.count);
       setLoading(false);
     } catch (err) {
+      if (axios.isCancel(err)) {
+        console.log('Request cancelled:', err.message);
+        return;
+      }
       console.error('Error fetching recipes:', err);
       setError(err.message || 'Error loading recipes. Please try again later.');
       setLoading(false);
