@@ -1,62 +1,149 @@
 import mongoose from 'mongoose';
-const { Schema } = mongoose;
+const Schema = mongoose.Schema;
 
-const RecipeSchema = new Schema({
+const ingredientSchema = new Schema({
+  name: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  amount: {
+    type: Number,
+    required: true,
+    min: 0
+  },
+  unit: {
+    type: String,
+    required: true,
+    trim: true
+  }
+});
+
+const recipeSchema = new Schema({
   title: {
     type: String,
-    required: [true, 'Title is required'],
+    required: [true, 'Recipe title is required'],
     trim: true,
-    maxlength: [100, 'Title cannot be more than 100 characters']
+    minlength: [3, 'Title must be at least 3 characters long'],
+    maxlength: [100, 'Title cannot exceed 100 characters']
   },
   description: {
     type: String,
-    required: [true, 'Description is required'],
-    trim: true,
-    maxlength: [500, 'Description cannot be more than 500 characters']
+    required: true,
+    trim: true
   },
-  ingredients: {
-    type: [String],
-    required: [true, 'At least one ingredient is required'],
-    validate: {
-      validator: function(v) {
-        return v.length > 0;
-      },
-      message: 'At least one ingredient is required'
+  ingredients: [ingredientSchema],
+  instructions: [{
+    step: {
+      type: Number,
+      required: true
+    },
+    description: {
+      type: String,
+      required: true
     }
-  },
-  steps: {
-    type: [String],
-    required: [true, 'At least one step is required'],
-    validate: {
-      validator: function(v) {
-        return v.length > 0;
-      },
-      message: 'At least one step is required'
-    }
-  },
-  imageUrl: {
-    type: String,
-    default: ''
-  },
+  }],
   cookingTime: {
     type: Number,
-    required: [true, 'Cooking time is required'],
+    required: true,
     min: [1, 'Cooking time must be at least 1 minute']
+  },
+  servings: {
+    type: Number,
+    required: true,
+    min: [1, 'Recipe must serve at least 1 person']
+  },
+  difficulty: {
+    type: String,
+    enum: ['Easy', 'Medium', 'Hard'],
+    required: true
   },
   category: {
     type: String,
-    required: [true, 'Category is required'],
-    enum: ['breakfast', 'lunch', 'dinner', 'dessert', 'snack', 'other'],
-    default: 'other'
+    required: true,
+    enum: ['Breakfast', 'Lunch', 'Dinner', 'Dessert', 'Snack']
+  },
+  tags: [{
+    type: String,
+    trim: true
+  }],
+  nutrition: {
+    calories: Number,
+    protein: Number,
+    carbohydrates: Number,
+    fat: Number
   },
   createdBy: {
     type: Schema.Types.ObjectId,
     ref: 'User',
-    required: [true, 'User reference is required']
+    required: true
+  },
+  ratings: [{
+    user: {
+      type: Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    rating: {
+      type: Number,
+      min: 1,
+      max: 5
+    },
+    review: String,
+    date: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+  averageRating: {
+    type: Number,
+    default: 0
+  },
+  image: {
+    type: String,
+    default: 'default-recipe.jpg'
   }
-}, { timestamps: true });
+}, {
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
+});
 
-// Add text index for search functionality
-RecipeSchema.index({ title: 'text', description: 'text' });
+// Virtual for URL
+recipeSchema.virtual('url').get(function() {
+  return `/recipes/${this._id}`;
+});
 
-export default mongoose.model('Recipe', RecipeSchema);
+// Index for better search performance
+recipeSchema.index({ title: 'text', description: 'text', tags: 'text' });
+
+// Pre-save middleware to calculate average rating
+recipeSchema.pre('save', function(next) {
+  if (this.ratings.length > 0) {
+    this.averageRating = this.ratings.reduce((acc, curr) => acc + curr.rating, 0) / this.ratings.length;
+  }
+  next();
+});
+
+// Static method to find similar recipes
+recipeSchema.statics.findSimilar = function(recipeId) {
+  return this.find({
+    _id: { $ne: recipeId },
+    $or: [
+      { category: this.category },
+      { tags: { $in: this.tags } }
+    ]
+  }).limit(5);
+};
+
+// Instance method to check if recipe is vegetarian
+recipeSchema.methods.isVegetarian = function() {
+  const nonVegIngredients = ['chicken', 'beef', 'pork', 'fish'];
+  return !this.ingredients.some(ing => 
+    nonVegIngredients.some(nonVeg => 
+      ing.name.toLowerCase().includes(nonVeg)
+    )
+  );
+};
+
+const Recipe = mongoose.model('Recipe', recipeSchema);
+export default Recipe;
