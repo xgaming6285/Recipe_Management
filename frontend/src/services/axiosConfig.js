@@ -20,12 +20,28 @@ instance.interceptors.request.use(
 
 // Response interceptor
 instance.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Transform the response data to match our frontend structure
+    if (response.data.success) {
+      return {
+        ...response,
+        data: response.data.data,
+        metadata: {
+          count: response.data.count,
+          success: response.data.success
+        }
+      };
+    }
+    return response;
+  },
   (error) => {
     if (error.response?.status === 401) {
       // Handle unauthorized access
       localStorage.removeItem('token');
       window.location.href = '/login';
+    } else if (error.response?.status === 403) {
+      // Handle forbidden access
+      window.location.href = '/';
     }
     
     // Return standardized error format
@@ -33,7 +49,7 @@ instance.interceptors.response.use(
     return Promise.reject({
       success: false,
       message: errorResponse.message || 'An error occurred',
-      stack: errorResponse.stack
+      stack: process.env.NODE_ENV === 'development' ? errorResponse.stack : undefined
     });
   }
 );

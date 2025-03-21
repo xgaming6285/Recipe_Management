@@ -23,6 +23,15 @@ const userSchema = new mongoose.Schema({
     minlength: [6, 'Password must be at least 6 characters'],
     select: false // Don't return password in queries by default
   },
+  role: {
+    type: String,
+    enum: ['user', 'admin', 'moderator'],
+    default: 'user'
+  },
+  isActive: {
+    type: Boolean,
+    default: true
+  },
   createdAt: {
     type: Date,
     default: Date.now
@@ -47,6 +56,24 @@ userSchema.pre('save', async function(next) {
 // Method to compare passwords
 userSchema.methods.comparePassword = async function(candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
+};
+
+// Method to check if user has specific role
+userSchema.methods.hasRole = function(roles) {
+  if (typeof roles === 'string') {
+    return this.role === roles;
+  }
+  return roles.includes(this.role);
+};
+
+// Method to check if user is admin
+userSchema.methods.isAdmin = function() {
+  return this.role === 'admin';
+};
+
+// Method to check if user is moderator or admin
+userSchema.methods.isModeratorOrAdmin = function() {
+  return ['moderator', 'admin'].includes(this.role);
 };
 
 export default mongoose.model('User', userSchema);

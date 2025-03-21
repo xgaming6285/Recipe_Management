@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import axios from 'axios';
+import { recipeService } from '../services/recipeService';
 
 const RecipeForm = () => {
   const navigate = useNavigate();
@@ -22,31 +22,24 @@ const RecipeForm = () => {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    // If we're in edit mode, fetch the recipe data
     if (isEditMode) {
       const fetchRecipe = async () => {
         try {
           setLoading(true);
-          const token = localStorage.getItem('token');
-          const response = await axios.get(`/api/recipes/${id}`, {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
-          
+          const recipe = await recipeService.getById(id);
           setFormData({
-            title: response.data.title,
-            description: response.data.description,
-            ingredients: response.data.ingredients,
-            steps: response.data.steps,
-            imageUrl: response.data.imageUrl,
-            cookingTime: response.data.cookingTime,
-            category: response.data.category
+            title: recipe.title,
+            description: recipe.description,
+            ingredients: recipe.ingredients,
+            steps: recipe.steps,
+            imageUrl: recipe.imageUrl,
+            cookingTime: recipe.cookingTime,
+            category: recipe.category
           });
           setLoading(false);
         } catch (error) {
           console.error('Error fetching recipe:', error);
-          setError('Error fetching recipe details. Please try again.');
+          setError(error.message || 'Error fetching recipe details. Please try again.');
           setLoading(false);
         }
       };
@@ -94,7 +87,6 @@ const RecipeForm = () => {
     
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
       
       // Filter out empty items from arrays
       const submissionData = {
@@ -113,22 +105,10 @@ const RecipeForm = () => {
       }
       
       if (isEditMode) {
-        // Update existing recipe
-        await axios.put(`/api/recipes/${id}`, submissionData, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        await recipeService.update(id, submissionData);
         toast.success('Recipe updated successfully!');
       } else {
-        // Create new recipe
-        await axios.post('/api/recipes', submissionData, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        await recipeService.create(submissionData);
         toast.success('Recipe created successfully!');
       }
       
@@ -136,7 +116,7 @@ const RecipeForm = () => {
       navigate('/recipes');
     } catch (error) {
       console.error('Error submitting recipe:', error);
-      setError(error.response?.data?.message || 'Error saving recipe. Please try again.');
+      setError(error.message || 'Error saving recipe. Please try again.');
       setLoading(false);
     }
   };

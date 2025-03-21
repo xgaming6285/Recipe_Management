@@ -1,64 +1,89 @@
-import axios from './axiosConfig';
+import apiClient from './apiClient';
 
-const API_URL = '/api/recipes';
+/**
+ * Service for handling recipe-related API calls
+ */
+export const recipeService = {
+  /**
+   * Get all recipes with optional filtering and pagination
+   * @param {Object} params
+   * @param {number} [params.page=1] - Page number
+   * @param {number} [params.limit=10] - Items per page
+   * @param {string} [params.search] - Search term
+   * @param {string} [params.category] - Recipe category
+   * @param {Object} [params.cookingTime] - Cooking time range
+   * @returns {Promise<{data: Recipe[], metadata: { count: number, success: boolean }}>}
+   */
+  async getAll(params = {}) {
+    const response = await apiClient.get('/recipes', { params });
+    return response;
+  },
 
-// Get all recipes with optional filters
-export const getAllRecipes = async (params = {}) => {
-  try {
-    const queryString = new URLSearchParams(params).toString();
-    const response = await axios.get(`${API_URL}${queryString ? `?${queryString}` : ''}`);
+  /**
+   * Get a recipe by ID
+   * @param {string} id - Recipe ID
+   * @returns {Promise<Recipe>}
+   */
+  async getById(id) {
+    const response = await apiClient.get(`/recipes/${id}`);
     return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
+  },
 
-// Get a single recipe by ID
-export const getRecipeById = async (id) => {
-  try {
-    const response = await axios.get(`${API_URL}/${id}`);
+  /**
+   * Create a new recipe
+   * @param {Recipe} recipe - Recipe data
+   * @returns {Promise<Recipe>}
+   */
+  async create(recipe) {
+    const response = await apiClient.post('/recipes', recipe);
     return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'Error fetching recipe' };
-  }
-};
+  },
 
-// Create a new recipe
-export const createRecipe = async (recipeData) => {
-  try {
-    const response = await axios.post(API_URL, recipeData);
+  /**
+   * Update an existing recipe
+   * @param {string} id - Recipe ID
+   * @param {Recipe} recipe - Updated recipe data
+   * @returns {Promise<Recipe>}
+   */
+  async update(id, recipe) {
+    const response = await apiClient.put(`/recipes/${id}`, recipe);
     return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'Error creating recipe' };
-  }
-};
+  },
 
-// Update an existing recipe
-export const updateRecipe = async (id, recipeData) => {
-  try {
-    const response = await axios.put(`${API_URL}/${id}`, recipeData);
+  /**
+   * Delete a recipe
+   * @param {string} id - Recipe ID
+   * @returns {Promise<void>}
+   */
+  async delete(id) {
+    await apiClient.delete(`/recipes/${id}`);
+  },
+
+  /**
+   * Get recipes by user
+   * @param {string} userId - User ID
+   * @param {Object} params - Query parameters
+   * @returns {Promise<{data: Recipe[], metadata: { count: number, success: boolean }}>}
+   */
+  async getByUser(userId, params = {}) {
+    const response = await apiClient.get(`/recipes/user/${userId}`, { params });
+    return response;
+  },
+
+  /**
+   * Upload recipe image
+   * @param {File} file - Image file
+   * @returns {Promise<{imageUrl: string}>}
+   */
+  async uploadImage(file) {
+    const formData = new FormData();
+    formData.append('image', file);
+    
+    const response = await apiClient.post('/recipes/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
     return response.data;
-  } catch (error) {
-    throw error.response?.data || { message: 'Error updating recipe' };
-  }
-};
-
-// Delete a recipe
-export const deleteRecipe = async (id) => {
-  try {
-    await axios.delete(`${API_URL}/${id}`);
-    return id;
-  } catch (error) {
-    throw error.response?.data || { message: 'Error deleting recipe' };
-  }
-};
-
-// Get recipes by current user
-export const getUserRecipes = async () => {
-  try {
-    const response = await axios.get('/api/users/me/recipes');
-    return response.data;
-  } catch (error) {
-    throw error;
   }
 };

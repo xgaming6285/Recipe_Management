@@ -1,28 +1,37 @@
 import express from 'express';
-import auth from '../middleware/auth';
 import {
-  getAllRecipes,
-  getRecipeById,
+  getRecipes,
+  getRecipe,
   createRecipe,
   updateRecipe,
-  deleteRecipe
+  deleteRecipe,
+  getUserRecipes
 } from '../controllers/recipeController';
+import { protect, authorize } from '../middleware/auth';
 
 const router = express.Router();
 
-// Get all recipes (with optional search/filter)
-router.get('/', getAllRecipes);
+// Public routes
+router.get('/', getRecipes);
+router.get('/:id', getRecipe);
 
-// Get a single recipe by ID
-router.get('/:id', getRecipeById);
+// Protected routes
+router.use(protect);
 
-// Create a new recipe (protected route)
-router.post('/', auth, createRecipe);
+// User routes
+router.get('/user/recipes', getUserRecipes);
+router.post('/', createRecipe);
 
-// Update a recipe (protected route)
-router.put('/:id', auth, updateRecipe);
+// Owner or Admin routes
+router.put('/:id', updateRecipe);
 
-// Delete a recipe (protected route)
-router.delete('/:id', auth, deleteRecipe);
+// Owner, Admin, or Moderator routes
+router.delete('/:id', deleteRecipe);
+
+// Admin only routes
+router.use(authorize('admin'));
+router.route('/admin/all')
+  .get(getRecipes)
+  .post(createRecipe);
 
 export default router;

@@ -1,134 +1,120 @@
 import Recipe from '../models/Recipe';
 import { AppError } from '../utils/errorHandler';
 import catchAsync from '../utils/catchAsync';
+import APIFeatures from '../utils/apiFeatures';
 
-// Get all recipes (with optional search/filter)
-export const getAllRecipes = catchAsync(async (req, res, next) => {
-  const { search, category, maxTime, minTime } = req.query;
-  const query = {};
+// Get all recipes with filtering, sorting, and pagination
+export const getRecipes = catchAsync(async (req, res) => {
+  const features = new APIFeatures(Recipe.find(), req.query)
+    .filter()
+    .search()
+    .sort()
+    .limitFields()
+    .paginate();
 
-  if (search) {
-    query.$text = { $search: search };
-  }
-
-  if (category) {
-    query.category = category;
-  }
-
-  if (maxTime || minTime) {
-    query.cookingTime = {};
-    if (maxTime) query.cookingTime.$lte = Number(maxTime);
-    if (minTime) query.cookingTime.$gte = Number(minTime);
-  }
-
-  const recipes = await Recipe.find(query)
-    .populate('createdBy', 'username')
-    .sort({ createdAt: -1 });
+  const recipes = await features.query.populate({
+    path: 'createdBy',
+    select: 'username'
+  });
 
   res.status(200).json({
-    status: 'success',
-    results: recipes.length,
-    data: {
-      recipes
-    }
+    success: true,
+    count: recipes.length,
+    data: recipes
   });
 });
 
-// Get a single recipe by ID
-export const getRecipeById = catchAsync(async (req, res, next) => {
-  const recipe = await Recipe.findById(req.params.id).populate('createdBy', 'username');
-  
+// Get single recipe
+export const getRecipe = catchAsync(async (req, res, next) => {
+  const recipe = await Recipe.findById(req.params.id).populate({
+    path: 'createdBy',
+    select: 'username'
+  });
+
   if (!recipe) {
     return next(new AppError('Recipe not found', 404));
   }
 
   res.status(200).json({
-    status: 'success',
-    data: {
-      recipe
-    }
+    success: true,
+    data: recipe
   });
 });
 
-// Create a new recipe
-export const createRecipe = catchAsync(async (req, res, next) => {
-  const { title, description, ingredients, steps, imageUrl, cookingTime, category } = req.body;
-
-  const recipe = new Recipe({
-    title,
-    description,
-    ingredients: Array.isArray(ingredients) ? ingredients : [ingredients],
-    steps: Array.isArray(steps) ? steps : [steps],
-    imageUrl: imageUrl || '',
-    cookingTime,
-    category,
-    createdBy: req.user.id
-  });
-
-  const savedRecipe = await recipe.save();
+// Create new recipe
+export const createRecipe = catchAsync(async (req, res) => {
+  req.body.createdBy = req.user._id;
+  
+  const recipe = await Recipe.create(req.body);
   
   res.status(201).json({
-    status: 'success',
-    data: {
-      recipe: savedRecipe
-    }
+    success: true,
+    data: recipe
   });
 });
 
-// Update a recipe
+// Update recipe
 export const updateRecipe = catchAsync(async (req, res, next) => {
-  const { title, description, ingredients, steps, imageUrl, cookingTime, category } = req.body;
-  
   let recipe = await Recipe.findById(req.params.id);
-  
+
   if (!recipe) {
     return next(new AppError('Recipe not found', 404));
   }
-  
-  if (recipe.createdBy.toString() !== req.user.id) {
-    return next(new AppError('You are not authorized to update this recipe', 403));
-  }
-  
-  const recipeFields = {
-    title,
-    description,
-    ingredients: Array.isArray(ingredients) ? ingredients : [ingredients],
-    steps: Array.isArray(steps) ? steps : [steps],
-    imageUrl: imageUrl || recipe.imageUrl,
-    cookingTime,
-    category
-  };
 
-  recipe = await Recipe.findByIdAndUpdate(
-    req.params.id,
-    { $set: recipeFields },
-    { new: true, runValidators: true }
-  );
-  
+  // Check ownership or admin status
+  if (recipe.createdBy.toString() !== req.user._id.toString() && !req.user.isAdmin()) {
+    return next(new AppError('Not authorized to update this recipe', 403));
+  }
+
+  recipe = await Recipe.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+    runValidators: true
+  });
+
   res.status(200).json({
-    status: 'success',
-    data: {
-      recipe
-    }
+    success: true,
+    data: recipe
   });
 });
 
-// Delete a recipe
+// Delete recipe
 export const deleteRecipe = catchAsync(async (req, res, next) => {
   const recipe = await Recipe.findById(req.params.id);
-  
+
   if (!recipe) {
     return next(new AppError('Recipe not found', 404));
   }
-  
-  if (recipe.createdBy.toString() !== req.user.id) {
-    return next(new AppError('You are not authorized to delete this recipe', 403));
+
+  // Check ownership or admin/moderator status
+  if (recipe.createdBy.toString() !== req.user._id.toString() && !req.user.isModeratorOrAdmin()) {
+    return next(new AppError('Not authorized to delete this recipe', 403));
   }
-  
-  await Recipe.findByIdAndDelete(req.params.id);
-  
-  res.status(204).json({
-    status: 'success',
-    data: null
+
+  await recipe.remove();
+
+  res.status(200).json({
+    success: true,
+    data: {}
+  });
+});
+
+// Get user's recipes
+export const getUserRecipes = catchAsync(async (req, res) => {
+  const features = new APIFeatures(
+    Recipe.find({ createdBy: req.user._id }),
+    req.query
+  )
+    .filter()
+    .search()
+    .sort()
+    .limitFields()
+    .paginate();
+
+  const recipes = await features.query;
+
+  res.status(200).json({
+    success: true,
+    count: recipes.length,
+    data: recipes
   });
 });

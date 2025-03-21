@@ -23,7 +23,7 @@ const Login = () => {
     setError('');
     
     try {
-      const response = await axios.post('/api/auth/login', formData);
+      const response = await axios.post('/auth/login', formData);
       localStorage.setItem('token', response.data.token);
       navigate('/dashboard');
     } catch (err) {
@@ -39,7 +39,7 @@ const Login = () => {
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
           Or{' '}
-          <Link to="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
+          <Link to="/signup" className="font-medium text-indigo-600 hover:text-indigo-500">
             create a new account
           </Link>
         </p>

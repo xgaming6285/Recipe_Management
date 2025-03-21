@@ -35,3 +35,28 @@ export const protect = catchAsync(async (req, res, next) => {
     });
   }
 });
+
+export const authorize = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return next(new AppError('You do not have permission to perform this action', 403));
+    }
+    next();
+  };
+};
+
+// Middleware to check if user owns the resource or is admin
+export const checkOwnership = (Model) => catchAsync(async (req, res, next) => {
+  const resource = await Model.findById(req.params.id);
+  
+  if (!resource) {
+    return next(new AppError('Resource not found', 404));
+  }
+
+  if (resource.createdBy && resource.createdBy.toString() !== req.user._id.toString() && !req.user.isAdmin()) {
+    return next(new AppError('You do not have permission to perform this action', 403));
+  }
+
+  req.resource = resource;
+  next();
+});
