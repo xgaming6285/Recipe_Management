@@ -6,9 +6,9 @@ import {
   updateRecipe,
   deleteRecipe,
   getUserRecipes
-} from '../controllers/recipeController';
-import { protect, authorize } from '../middleware/auth';
-import { validateRecipeInput } from '../middleware/validation';
+} from '../controllers/recipeController.js';
+import { protect, authorize } from '../middleware/auth.js';
+import validateRecipeInput from '../middleware/validateRecipe.js';
 
 const router = express.Router();
 

@@ -8,10 +8,10 @@ import {
     errorHandler, 
     handleUnhandledRejection, 
     handleUncaughtException 
-} from './utils/errorHandler';
-import authRoutes from './routes/authRoutes';
-import userRoutes from './routes/userRoutes';
-import recipeRoutes from './routes/recipeRoutes';
+} from './utils/errorHandler.js';
+import authRoutes from './routes/authRoutes.js';
+import userRoutes from './routes/userRoutes.js';
+import recipeRoutes from './routes/recipeRoutes.js';
 import connectDB from './config/db.js';
 
 // Handle uncaught exceptions

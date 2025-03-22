@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { AppError } from '../utils/errorHandler';
+import { AppError } from '../utils/errorHandler.js';
 
 // Function to connect to MongoDB with retry mechanism
 const connectWithRetry = async (retries = 5, delay = 5000) => {

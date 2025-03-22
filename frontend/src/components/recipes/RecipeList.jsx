@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { getAllRecipes } from '../../services/recipeService';
+import { recipeService } from '../../services/recipeService';
 import RecipeCard from './RecipeCard';
 import { useAuth } from '../../context/AuthContext';
 import useAxiosCancellation from '../../hooks/useAxiosCancellation';
@@ -21,11 +21,7 @@ const RecipeList = () => {
   
   const ITEMS_PER_PAGE = 12;
 
-  useEffect(() => {
-    fetchRecipes();
-  }, [selectedCategory, cookingTimeFilter, currentPage, sortBy]);
-
-  const fetchRecipes = async (search = searchTerm) => {
+  const fetchRecipes = useCallback(async (search = searchTerm) => {
     try {
       setLoading(true);
       setError('');
@@ -51,10 +47,12 @@ const RecipeList = () => {
           case 'long':
             params.cookingTime = { min: 60 };
             break;
+          default:
+            break;
         }
       }
 
-      const response = await getAllRecipes(params, { cancelToken: getCancelToken() });
+      const response = await recipeService.getAll(params, { cancelToken: getCancelToken() });
       setRecipes(response.data);
       setTotalRecipes(response.metadata.count);
       setLoading(false);
@@ -67,7 +65,11 @@ const RecipeList = () => {
       setError(err.message || 'Error loading recipes. Please try again later.');
       setLoading(false);
     }
-  };
+  }, [searchTerm, selectedCategory, currentPage, ITEMS_PER_PAGE, sortBy, cookingTimeFilter, getCancelToken]);
+
+  useEffect(() => {
+    fetchRecipes();
+  }, [fetchRecipes]);
 
   const handleSearch = (e) => {
     e.preventDefault();

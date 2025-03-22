@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getRecipeById, deleteRecipe } from '../services/recipeService';
+import { useRecipes } from '../context/RecipeContext';
 import { useAuth } from '../context/AuthContext';
 
 const RecipeDetail = () => {
@@ -10,11 +10,12 @@ const RecipeDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { getRecipe, deleteRecipe } = useRecipes();
 
   useEffect(() => {
     const fetchRecipe = async () => {
       try {
-        const data = await getRecipeById(id);
+        const data = await getRecipe(id);
         setRecipe(data);
         setLoading(false);
       } catch (err) {
@@ -24,7 +25,7 @@ const RecipeDetail = () => {
     };
 
     fetchRecipe();
-  }, [id]);
+  }, [id, getRecipe]);
 
   const handleDelete = async () => {
     if (window.confirm('Are you sure you want to delete this recipe?')) {

@@ -1,17 +1,18 @@
-import Recipe from '../models/Recipe';
-import { AppError } from '../utils/errorHandler';
-import catchAsync from '../utils/catchAsync';
-import APIFeatures from '../utils/apiFeatures';
+import Recipe from '../models/Recipe.js';
+import { AppError } from '../utils/errorHandler.js';
+import catchAsync from '../utils/catchAsync.js';
+import APIFeatures from '../utils/apiFeatures.js';
 import {
   advancedSearch,
   getRecipeStats,
-  getPopularIngredients,
   getUserRecipeStats,
   executeTransaction
-} from '../utils/mongoUtils';
+} from '../utils/mongoUtils.js';
 
-// Get all recipes with filtering, sorting, and pagination
+// Get recipes with pagination and filtering
 export const getRecipes = catchAsync(async (req, res) => {
+  const { page = 1, limit = 10, category, difficulty, searchTerm } = req.query;
+  
   const features = new APIFeatures(Recipe.find(), req.query)
     .filter()
     .search()
@@ -126,30 +127,8 @@ export const getUserRecipes = catchAsync(async (req, res) => {
   });
 });
 
-// Get recipes with pagination and filtering
-exports.getRecipes = async (req, res) => {
-  try {
-    const { page = 1, limit = 10, category, difficulty, searchTerm } = req.query;
-    
-    const searchParams = {
-      searchTerm,
-      filters: {
-        ...(category && { category }),
-        ...(difficulty && { difficulty })
-      },
-      page: parseInt(page),
-      limit: parseInt(limit)
-    };
-
-    const results = await advancedSearch(Recipe, searchParams);
-    res.json(results);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
 // Get recipe statistics
-exports.getStats = async (req, res) => {
+export const getStats = async (req, res) => {
   try {
     const stats = await getRecipeStats(Recipe);
     res.json(stats);
@@ -159,10 +138,15 @@ exports.getStats = async (req, res) => {
 };
 
 // Get popular ingredients
-exports.getPopularIngredients = async (req, res) => {
+export const getPopularIngredients = async (req, res) => {
   try {
     const { limit = 10 } = req.query;
-    const ingredients = await getPopularIngredients(Recipe, parseInt(limit));
+    const ingredients = await Recipe.aggregate([
+      { $unwind: "$ingredients" },
+      { $group: { _id: "$ingredients.name", count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: parseInt(limit) }
+    ]);
     res.json(ingredients);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -170,7 +154,7 @@ exports.getPopularIngredients = async (req, res) => {
 };
 
 // Get user's recipe statistics
-exports.getUserStats = async (req, res) => {
+export const getUserStats = async (req, res) => {
   try {
     const stats = await getUserRecipeStats(Recipe, req.user._id);
     res.json(stats[0] || {});
@@ -179,38 +163,8 @@ exports.getUserStats = async (req, res) => {
   }
 };
 
-// Create recipe with transaction
-exports.createRecipe = async (req, res) => {
-  try {
-    const recipe = new Recipe({
-      ...req.body,
-      createdBy: req.user._id
-    });
-
-    // Example of using transaction for creating a recipe and updating user stats
-    const operations = [
-      async (session) => {
-        return await recipe.save({ session });
-      },
-      async (session) => {
-        // Update user's recipe count or other stats
-        return await User.findByIdAndUpdate(
-          req.user._id,
-          { $inc: { recipeCount: 1 } },
-          { session }
-        );
-      }
-    ];
-
-    const [savedRecipe] = await executeTransaction(operations);
-    res.status(201).json(savedRecipe);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-};
-
 // Find similar recipes
-exports.findSimilarRecipes = async (req, res) => {
+export const findSimilarRecipes = async (req, res) => {
   try {
     const { recipeId } = req.params;
     const recipe = await Recipe.findById(recipeId);
@@ -226,7 +180,7 @@ exports.findSimilarRecipes = async (req, res) => {
 };
 
 // Advanced recipe search with aggregation
-exports.searchRecipes = async (req, res) => {
+export const searchRecipes = async (req, res) => {
   try {
     const { minRating, maxCookingTime, tags } = req.query;
     
@@ -271,7 +225,7 @@ exports.searchRecipes = async (req, res) => {
 };
 
 // Bulk update recipes (with validation)
-exports.bulkUpdateRecipes = async (req, res) => {
+export const bulkUpdateRecipes = async (req, res) => {
   try {
     const { updates } = req.body;
     
@@ -297,5 +251,3 @@ exports.bulkUpdateRecipes = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
-
-module.exports = exports;

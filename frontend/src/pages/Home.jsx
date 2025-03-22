@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import RecipeList from '../components/recipes/RecipeList';
 import SearchFilter from '../components/SearchFilter';
@@ -13,7 +13,7 @@ const Home = () => {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [cookingTimeFilter, setCookingTimeFilter] = useState('');
 
-  const fetchRecipes = async (search = searchTerm) => {
+  const fetchRecipes = useCallback(async (search = searchTerm) => {
     try {
       setLoading(true);
       setError('');
@@ -38,11 +38,11 @@ const Home = () => {
       setError('Failed to load recipes. Please try again later.');
       setLoading(false);
     }
-  };
+  }, [searchTerm, selectedCategory, cookingTimeFilter]);
 
   useEffect(() => {
     fetchRecipes();
-  }, [selectedCategory, cookingTimeFilter]); // Re-fetch when filters change
+  }, [fetchRecipes, selectedCategory, cookingTimeFilter, searchTerm]); // Re-fetch when filters or search term change
 
   const handleSearch = () => {
     fetchRecipes(searchTerm);

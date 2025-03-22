@@ -1,7 +1,7 @@
-import User from '../models/User';
-import Recipe from '../models/Recipe';
-import { AppError } from '../utils/errorHandler';
-import catchAsync from '../utils/catchAsync';
+import User from '../models/User.js';
+import Recipe from '../models/Recipe.js';
+import { AppError } from '../utils/errorHandler.js';
+import catchAsync from '../utils/catchAsync.js';
 
 // Get current user profile
 export const getUserProfile = catchAsync(async (req, res, next) => {

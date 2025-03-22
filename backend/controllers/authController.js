@@ -1,7 +1,7 @@
-import User from '../models/User';
+import User from '../models/User.js ';
 import jwt from 'jsonwebtoken';
-import { AppError } from '../utils/errorHandler';
-import catchAsync from '../utils/catchAsync';
+import { AppError } from '../utils/errorHandler.js';
+import catchAsync from '../utils/catchAsync.js';
 
 // Create token function
 const createToken = (id) => {
@@ -71,4 +71,34 @@ export const login = catchAsync(async (req, res, next) => {
       user
     }
   });
+});
+
+// Refresh token
+export const refreshToken = catchAsync(async (req, res, next) => {
+  const { token } = req.body;
+
+  if (!token) {
+    return next(new AppError('Please provide a token', 400));
+  }
+
+  try {
+    // Verify the token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    // Check if user still exists
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return next(new AppError('The user belonging to this token no longer exists', 401));
+    }
+
+    // Generate new token
+    const newToken = createToken(user._id);
+
+    res.status(200).json({
+      status: 'success',
+      token: newToken
+    });
+  } catch (err) {
+    return next(new AppError('Invalid token', 401));
+  }
 });
