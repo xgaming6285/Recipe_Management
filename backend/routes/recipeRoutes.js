@@ -12,9 +12,6 @@ import validateRecipeInput from '../middleware/validateRecipe.js';
 
 const router = express.Router();
 
-router.post('/', validateRecipeInput, createRecipe);
-router.put('/:id', validateRecipeInput, updateRecipe);
-
 // Public routes
 router.get('/', getRecipes);
 router.get('/:id', getRecipe);
@@ -24,10 +21,10 @@ router.use(protect);
 
 // User routes
 router.get('/user/recipes', getUserRecipes);
-router.post('/', createRecipe);
+router.post('/', validateRecipeInput, createRecipe);
 
 // Owner or Admin routes
-router.put('/:id', updateRecipe);
+router.put('/:id', validateRecipeInput, updateRecipe);
 
 // Owner, Admin, or Moderator routes
 router.delete('/:id', deleteRecipe);

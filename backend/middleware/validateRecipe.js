@@ -1,4 +1,3 @@
-
 // Middleware to validate recipe input
 const validateRecipeInput = (req, res, next) => {
   // Basic validation
@@ -12,8 +11,8 @@ const validateRecipeInput = (req, res, next) => {
     return res.status(400).json({ error: 'At least one ingredient is required' });
   }
 
-  if (!instructions || instructions.trim() === '') {
-    return res.status(400).json({ error: 'Recipe instructions are required' });
+  if (!instructions || !Array.isArray(instructions) || instructions.length === 0) {
+    return res.status(400).json({ error: 'At least one instruction step is required' });
   }
 
   next();
