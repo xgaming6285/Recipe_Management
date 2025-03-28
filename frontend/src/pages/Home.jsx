@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
 import RecipeList from '../components/recipes/RecipeList';
 import SearchFilter from '../components/SearchFilter';
+import { recipeService } from '../services/recipeService';
 
 const Home = () => {
   const [recipes, setRecipes] = useState([]);
@@ -19,23 +19,31 @@ const Home = () => {
       setError('');
       
       // Build query parameters
-      const params = new URLSearchParams();
-      if (search) params.append('search', search);
-      if (selectedCategory) params.append('category', selectedCategory);
+      const params = {};
+      if (search) params.search = search;
+      if (selectedCategory) params.category = selectedCategory;
       if (cookingTimeFilter) {
         const maxTime = cookingTimeFilter === 'quick' ? 30 : 
                        cookingTimeFilter === 'medium' ? 60 : null;
         
-        if (maxTime) params.append('maxTime', maxTime);
-        if (cookingTimeFilter === 'long') params.append('minTime', 60);
+        if (maxTime) params.maxTime = maxTime;
+        if (cookingTimeFilter === 'long') params.minTime = 60;
       }
       
-      const response = await axios.get(`/api/recipes?${params.toString()}`);
-      setRecipes(response.data);
+      console.log('Fetching recipes with params:', params);
+      const response = await recipeService.getAll(params);
+      
+      if (!response || !response.data) {
+        throw new Error('Invalid response from server');
+      }
+      
+      console.log('Recipes fetched successfully:', response.data.length);
+      setRecipes(response.data || []);
       setLoading(false);
     } catch (err) {
       console.error('Error fetching recipes:', err);
-      setError('Failed to load recipes. Please try again later.');
+      setError(err.message || 'Failed to load recipes. Please try again later.');
+      setRecipes([]);
       setLoading(false);
     }
   }, [searchTerm, selectedCategory, cookingTimeFilter]);

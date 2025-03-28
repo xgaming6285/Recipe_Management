@@ -98,7 +98,7 @@ export const deleteRecipe = catchAsync(async (req, res, next) => {
     return next(new AppError('Not authorized to delete this recipe', 403));
   }
 
-  await recipe.remove();
+  await Recipe.deleteOne({ _id: req.params.id });
 
   res.status(200).json({
     success: true,
@@ -108,8 +108,10 @@ export const deleteRecipe = catchAsync(async (req, res, next) => {
 
 // Get user's recipes
 export const getUserRecipes = catchAsync(async (req, res) => {
+  const userId = req.params.userId;
+  
   const features = new APIFeatures(
-    Recipe.find({ createdBy: req.user._id }),
+    Recipe.find({ createdBy: userId }),
     req.query
   )
     .filter()

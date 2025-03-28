@@ -17,7 +17,7 @@ export const AuthProvider = ({ children }) => {
     const loadUser = async () => {
       if (token) {
         try {
-          const res = await apiClient.get('/users/me');
+          const res = await apiClient.get('/api/users/me');
           setCurrentUser(res.data.data.user);
         } catch (err) {
           console.error('Failed to load user', err);
@@ -35,7 +35,7 @@ export const AuthProvider = ({ children }) => {
   const signup = async (username, email, password) => {
     try {
       setError('');
-      const res = await apiClient.post('/auth/signup', { username, email, password });
+      const res = await apiClient.post('/api/auth/signup', { username, email, password });
       
       const { token, data } = res.data;
       localStorage.setItem('token', token);
@@ -53,7 +53,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       setError('');
-      const res = await apiClient.post('/auth/login', { email, password });
+      const res = await apiClient.post('/api/auth/login', { email, password });
       
       const { token, data } = res.data;
       localStorage.setItem('token', token);

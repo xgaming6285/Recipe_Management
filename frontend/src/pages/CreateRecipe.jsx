@@ -81,7 +81,7 @@ const CreateRecipe = () => {
     setError('');
 
     try {
-      const response = await apiClient.post('/recipes', formData);
+      const response = await apiClient.post('/api/recipes', formData);
       navigate(`/recipes/${response.data._id}`);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to create recipe');

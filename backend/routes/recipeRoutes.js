@@ -20,7 +20,7 @@ router.get('/:id', getRecipe);
 router.use(protect);
 
 // User routes
-router.get('/user/recipes', getUserRecipes);
+router.get('/user/:userId', getUserRecipes);
 router.post('/', validateRecipeInput, createRecipe);
 
 // Owner or Admin routes

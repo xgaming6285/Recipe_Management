@@ -23,6 +23,9 @@ dotenv.config();
 // Initialize express app
 const app = express();
 
+// Trust proxy for express-rate-limit to work correctly with X-Forwarded-For header
+app.set('trust proxy', 1);
+
 // Middleware
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
@@ -56,7 +59,7 @@ app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
 // Timeout handling
 app.use((req, res, next) => {
-  req.setTimeout(5000, () => {
+  req.setTimeout(30000, () => {
     res.status(408).send('Request timeout');
   });
   next();
@@ -75,8 +78,8 @@ app.use(errorHandler);
 const startServer = async () => {
   try {
     await connectDB();
-    const PORT = process.env.PORT || 5000;
-    const server = app.listen(PORT, () => {
+    const PORT = process.env.PORT || 5001;
+    const server = app.listen(PORT, '0.0.0.0', () => {
       console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
     });
 

@@ -6,9 +6,9 @@ import { useAuth } from '../../context/AuthContext';
 import useAxiosCancellation from '../../hooks/useAxiosCancellation';
 import axios from 'axios';
 
-const RecipeList = () => {
-  const [recipes, setRecipes] = useState([]);
-  const [loading, setLoading] = useState(true);
+const RecipeList = ({ recipes: propRecipes }) => {
+  const [recipes, setRecipes] = useState(propRecipes || []);
+  const [loading, setLoading] = useState(!propRecipes);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -21,7 +21,19 @@ const RecipeList = () => {
   
   const ITEMS_PER_PAGE = 12;
 
+  useEffect(() => {
+    if (propRecipes) {
+      setRecipes(propRecipes);
+      setLoading(false);
+    }
+  }, [propRecipes]);
+
   const fetchRecipes = useCallback(async (search = searchTerm) => {
+    // Skip fetching if recipes were provided as props
+    if (propRecipes && !search && !selectedCategory && !cookingTimeFilter && sortBy === '-createdAt' && currentPage === 1) {
+      return;
+    }
+    
     try {
       setLoading(true);
       setError('');
@@ -65,7 +77,7 @@ const RecipeList = () => {
       setError(err.message || 'Error loading recipes. Please try again later.');
       setLoading(false);
     }
-  }, [searchTerm, selectedCategory, currentPage, ITEMS_PER_PAGE, sortBy, cookingTimeFilter, getCancelToken]);
+  }, [searchTerm, selectedCategory, currentPage, ITEMS_PER_PAGE, sortBy, cookingTimeFilter, getCancelToken, propRecipes]);
 
   useEffect(() => {
     fetchRecipes();
